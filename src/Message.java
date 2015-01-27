@@ -1,6 +1,7 @@
 import java.io.Serializable;
 
 public class Message implements Serializable{
+	private static final long serialVersionUID = 1L;
 	public static int seq_num = 1; // global seq number starting with 1
 	private String src;
 	private String dest;

@@ -1,3 +1,5 @@
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.net.InetAddress;
@@ -7,6 +9,8 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 
 import org.yaml.snakeyaml.Yaml;
@@ -18,7 +22,7 @@ public class MessagePasser {
 	private static ArrayList<Rule> recv_rules;
 	private static Queue<Message> send_queue = new LinkedList<Message>();
 	private HashMap<String, Socket> connections; // stores <dest_name, socket>
-	private HashMap<String, Host> hosts;// stores <dest_name, host>
+	private HashMap<String, Host> hosts = new HashMap<String,Host>();// stores <dest_name, host>
 	private int server_port = 12345; // this value is randomly choosed
 	
 	public MessagePasser(String configuration_filename, String local_name) throws IOException{
@@ -105,8 +109,39 @@ public class MessagePasser {
 			return p.get_recv_queue().poll();
 		}
 	}
-	private boolean parse_configuration(String file_name){
+	private boolean parse_configuration(String file_name) throws FileNotFoundException{
 		/* TODO how to use yaml? */
+		FileInputStream file = new FileInputStream("/home/chenshuo/18842/lab0/configuration");
+		Yaml yaml =new Yaml();
+		Map<String, Object>  buffer = (Map<String, Object>) yaml.load(file);
+		List<Map<String, Object>> host_list  = (List<Map<String, Object>>) buffer.get("configuration");
+		List<Map<String, Object>> send_list  = (List<Map<String, Object>>) buffer.get("sendRules");
+		List<Map<String, Object>> recv_list  = (List<Map<String, Object>>) buffer.get("receiveRules");
+		for (Map<String, Object> iterator : host_list) {
+			Host host= new Host();
+			host.set_ip((String)iterator.get("ip"));
+			host.set_name((String)iterator.get("name"));
+			host.set_port((Integer)iterator.get("port"));
+			hosts.put(host.get_name(), host);
+		}
+		for (Map<String, Object> iterator : send_list) {
+			Rule rule = new Rule();
+			rule.set_action((String)iterator.get("action"));
+			rule.set_dest((String)iterator.get("dest"));
+			rule.set_src((String)iterator.get("src"));
+			rule.set_kind((String)iterator.get("kind"));
+		    rule.set_seqNum((Integer)iterator.get("seqNum"));
+			send_rules.add(rule);
+		}
+		for (Map<String, Object> iterator : recv_list) {
+			Rule rule = new Rule();
+			rule.set_action((String)iterator.get("action"));
+			rule.set_dest((String)iterator.get("dest"));
+			rule.set_src((String)iterator.get("src"));
+			rule.set_kind((String)iterator.get("kind"));
+			rule.set_seqNum((Integer)iterator.get("seqNum"));
+			recv_rules.add(rule);
+		}
 		return true;
 	}
 	public static int send_check(Message send){

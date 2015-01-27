@@ -31,6 +31,12 @@ public class Rule {
 	public void set_seqNum(String seq){
 		this.seqNum = seq;
 	}
+	public void set_seqNum(Integer seq){
+		this.seqNum = String.valueOf(seq);
+	}
+	public void show(){
+		System.out.print("src: " + this.src + "\ndest: "+this.dest + "\naction: "+ this.action + "\nseq: "+ this.seqNum + "\n\n");
+	}
 	public int get_int_seqNum(){return Integer.parseInt(this.seqNum);}
 	public String get_type(){return this.type;}
 	public String get_action(){return this.action;}
