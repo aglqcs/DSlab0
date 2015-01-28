@@ -22,23 +22,18 @@ public class Userapplication implements Runnable{
 			String dest = scanner.nextLine();
 			String kind = scanner.nextLine();
 			String data = scanner.nextLine();
-			Message to_send = new Message(dest,kind,data);
+			Message to_send = new Message(localname,dest,kind,data);
 			mp.send(to_send);
 		}
 	}
 
 	public void run() {
 		while(true){
-			try {
-				Thread.sleep(1000);
-				if( mp != null){
-					Message recv = mp.receive();
-					if( recv != null){
-						System.out.println("[RECV]	"+recv.get_src() +":"+ recv.get_data().toString());
-					}
+			if( mp != null){
+				Message recv = mp.receive();
+				if( recv != null){
+					System.out.println("[RECV]	"+recv.get_src() +":"+ recv.get_data().toString());
 				}
-			} catch (InterruptedException e) {
-				e.printStackTrace();
 			}
 		}
 	}

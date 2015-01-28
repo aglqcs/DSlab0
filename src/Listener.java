@@ -18,6 +18,10 @@ public class Listener implements Runnable{
 	public Queue<Message> get_recv_queue(){
 		return recv_queue;
 	}
+	public static void show_queue_length(){
+		System.out.println("recv : " + recv_queue.size());
+		System.out.println("delay: " + delay_queue.size());
+	}
 	synchronized private void insert_recv_queue(Message recv){
 		recv_queue.add(recv);
 	}
@@ -30,9 +34,10 @@ public class Listener implements Runnable{
 		}
 	}
 	public void run() {
-		try {
-			ObjectInputStream readin = new ObjectInputStream(socket.getInputStream());
+		try {	
 			while(true){
+				ObjectInputStream readin = new ObjectInputStream(socket.getInputStream()); //fixed but note: if put this outside the while loop it will just receive only 1 message why?
+				
 				Message recv = (Message)readin.readObject();
 				/*		check if recv follows recv rule, and insert to recv queue
 				 * 			The insert process need to be synchronized!
@@ -44,15 +49,15 @@ public class Listener implements Runnable{
 				}
 				else if(result == 1){
 					//drop message
-					System.out.println("recv rule: dropped message");
+					System.out.println("[recv rule]: dropped message");
 				}
 				else if(result == 2){
 					//delay message
-					System.out.println("recv rule: delay message");
+					System.out.println("[recv rule]: delay message");
 					insert_delay_queue(recv);
 				}
 				else if(result == 3){
-					System.out.println("recv rule: duplicate message");
+					System.out.println("[recv rule]: duplicate message");
 					//duplicate message
 					Message dup = new Message(recv);
 					insert_recv_queue(recv);
@@ -63,7 +68,8 @@ public class Listener implements Runnable{
 				}
 			}
 		} catch (IOException | ClassNotFoundException e) {
-			e.printStackTrace();
+			//e.printStackTrace();
+			/*note: here I delete this function because there is a EOFexception, even the program is working good, So I just do not let it print to create noise*/
 		}
 	}
 	

@@ -32,12 +32,19 @@ public class Rule {
 		this.seqNum = seq;
 	}
 	public void set_seqNum(Integer seq){
-		this.seqNum = String.valueOf(seq);
+		if(seq != null)
+			this.seqNum = new String(String.valueOf(seq));
 	}
 	public void show(){
 		System.out.print("src: " + this.src + "\ndest: "+this.dest + "\naction: "+ this.action + "\nseq: "+ this.seqNum + "\n\n");
 	}
-	public int get_int_seqNum(){return Integer.parseInt(this.seqNum);}
+	public int get_int_seqNum(){
+		/* some rule do not need to match sequence number, return 0 if in that case*/
+		if(this.seqNum == null) 
+			return 0;
+		else
+			return Integer.parseInt(this.seqNum);
+	}
 	public String get_type(){return this.type;}
 	public String get_action(){return this.action;}
 	public String get_src(){return this.src;}

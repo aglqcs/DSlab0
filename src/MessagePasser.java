@@ -23,7 +23,8 @@ public class MessagePasser {
 	private static Queue<Message> send_queue = new LinkedList<Message>();
 	private HashMap<String, Socket> connections = new HashMap<String,Socket>(); // stores <dest_name, socket>
 	private HashMap<String, Host> hosts = new HashMap<String,Host>();// stores <dest_name, host>
-	private int server_port = 12345; // this value is randomly choosed
+//	private int server_port = 12345; // this value is randomly choosed
+	private int server_port;
 	
 	public MessagePasser(String configuration_filename, String local_name) throws IOException{
 		this.configuration_file = configuration_filename;
@@ -38,6 +39,7 @@ public class MessagePasser {
 		}
 		
 		/* start one thread to listen */
+		server_port = Integer.parseInt(hosts.get(local_name).get_port());
 		IncomeHandler income = new IncomeHandler(server_port);
 		new Thread(income).start();
 	}
@@ -60,7 +62,7 @@ public class MessagePasser {
 			fd = new Socket(dst_ip,dst_port);
 			connections.put(dest, fd);
 		}
-		ObjectOutputStream out = new ObjectOutputStream(fd.getOutputStream());
+		
 
 		// When user create message: should call set_seqnumber, set_dest,set_kind
 		message.set_source(local_name);
@@ -68,39 +70,45 @@ public class MessagePasser {
 		int result = send_check(message);
 		if(result == 0){
 			// send the message
+			ObjectOutputStream out = new ObjectOutputStream(fd.getOutputStream());
 			out.writeObject(message);
 			System.out.println("[SEND direct]	"+message.get_dest()+":"+message.get_data().toString());
 			while( !send_queue.isEmpty()){
-				send(send_queue.poll());
+				message = send_queue.poll();
+				out = new ObjectOutputStream(fd.getOutputStream());
+				out.writeObject(message);
+				out.flush();
+				System.out.println("[SEND delay]	"+message.get_dest()+":"+message.get_data().toString());
 			}
 		}
 		else if(result == 1){
 			// drop the message
+			System.out.println("[SEND drop]");
 		}
 		else if(result  == 2){
-			//delay the message, add to a send queue
-			if( !message.get_send_delay() ){
-				message.set_send_delay(true);
-				send_queue.add(message);
-			}
-			else{
-				out.writeObject(message);
-				System.out.println("[SEND delay]	"+message.get_dest()+":"+message.get_data().toString());
-			}
+			// delay the message
+			Message replicate = new Message(message);
+			send_queue.add(replicate);
+			System.out.println("[SEND delay]");
 		}
 		else if(result == 3){
 			//duplicate the message
+			ObjectOutputStream out = new ObjectOutputStream(fd.getOutputStream());
 			Message dup = new Message(message);
 			dup.set_duplicate(true);
 			out.writeObject(message);
 			System.out.println("[SEND dup1]	"+message.get_dest()+":"+message.get_data().toString());
+			out = new ObjectOutputStream(fd.getOutputStream());
 			out.writeObject(dup);
 			System.out.println("[SEND dup2]	"+message.get_dest()+":"+message.get_data().toString());
 			while( !send_queue.isEmpty()){
-				send(send_queue.poll());
+				message = send_queue.poll();
+				out = new ObjectOutputStream(fd.getOutputStream());
+				out.writeObject(message);
+				out.flush();
+				System.out.println("[SEND delay]	"+message.get_dest()+":"+message.get_data().toString());
 			}
 		}
-		out.close();
 	}
 	public Message receive(){
 		Listener p = new Listener();
@@ -175,10 +183,5 @@ public class MessagePasser {
 		}
 		return 0;
 	}
-	
-	/*public static void main(String[] args) throws IOException{
-	// TODO need delete, for testing *		
-	 MessagePasser test = new MessagePasser("/home/chenshuo/18842/lab0/configuration","host");
-	}
-	*/
+
 }

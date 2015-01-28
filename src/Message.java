@@ -11,10 +11,12 @@ public class Message implements Serializable{
 	private boolean duplicate = false;
 	private boolean send_delay = false;
 	
-	public Message(String dest, String kind, Object data){
+	public Message(String src,String dest, String kind, Object data){
+		this.src = src;
 		this.dest = dest;
 		this.kind = kind;
 		this.data = data;
+		set_seqNum();
 	}
 	public Message(Message recv) {
 		this.src = recv.get_src();
@@ -49,4 +51,13 @@ public class Message implements Serializable{
 	public boolean get_duplicate(){return duplicate;}
 	public boolean get_send_delay(){return send_delay;}
 	public Object get_data(){return data;}
+	public void show(){
+		System.out.println("-------------");
+		System.out.println(src);
+		System.out.println(dest);
+		System.out.println(kind);
+		System.out.println(this.seq);
+		System.out.println(data);
+		System.out.println("-------------");
+	}
 }
