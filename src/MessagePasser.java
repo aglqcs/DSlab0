@@ -21,7 +21,7 @@ public class MessagePasser {
 	private static ArrayList<Rule> send_rules;
 	private static ArrayList<Rule> recv_rules;
 	private static Queue<Message> send_queue = new LinkedList<Message>();
-	private HashMap<String, Socket> connections; // stores <dest_name, socket>
+	private HashMap<String, Socket> connections = new HashMap<String,Socket>(); // stores <dest_name, socket>
 	private HashMap<String, Host> hosts = new HashMap<String,Host>();// stores <dest_name, host>
 	private int server_port = 12345; // this value is randomly choosed
 	
@@ -38,19 +38,19 @@ public class MessagePasser {
 		}
 		
 		/* start one thread to listen */
-		ServerSocket socket = new ServerSocket(server_port);
-		while(true){
-			Socket connectionSocket = socket.accept();
-        	Listener listen = new Listener(connectionSocket);
-        	new Thread(listen).start();
-		}
+		IncomeHandler income = new IncomeHandler(server_port);
+		new Thread(income).start();
 	}
 	public void send(Message message) throws IOException{
-		/*TODO get info of this message and check send rules */
-		/*TODO get a socket from connection list, if not exist, create another socket and send message*/
-		/*TODO set message content like sequence number etc. */
+		/* get info of this message and check send rules */
+		/* get a socket from connection list, if not exist, create another socket and send message*/
+		/* set message content like sequence number etc. */
 		String dest = message.get_dest();
 		Socket fd = null;
+		if( hosts.get(dest) == null){
+			System.out.println("DEBUG: error destination (" +dest+") quit send() now");
+			return;
+		}
 		if( connections.get(dest) != null  ){
 			fd = connections.get(dest);
 		}
@@ -69,6 +69,7 @@ public class MessagePasser {
 		if(result == 0){
 			// send the message
 			out.writeObject(message);
+			System.out.println("[SEND direct]	"+message.get_dest()+":"+message.get_data().toString());
 			while( !send_queue.isEmpty()){
 				send(send_queue.poll());
 			}
@@ -84,6 +85,7 @@ public class MessagePasser {
 			}
 			else{
 				out.writeObject(message);
+				System.out.println("[SEND delay]	"+message.get_dest()+":"+message.get_data().toString());
 			}
 		}
 		else if(result == 3){
@@ -91,7 +93,9 @@ public class MessagePasser {
 			Message dup = new Message(message);
 			dup.set_duplicate(true);
 			out.writeObject(message);
+			System.out.println("[SEND dup1]	"+message.get_dest()+":"+message.get_data().toString());
 			out.writeObject(dup);
+			System.out.println("[SEND dup2]	"+message.get_dest()+":"+message.get_data().toString());
 			while( !send_queue.isEmpty()){
 				send(send_queue.poll());
 			}
@@ -110,8 +114,7 @@ public class MessagePasser {
 		}
 	}
 	private boolean parse_configuration(String file_name) throws FileNotFoundException{
-		/* TODO how to use yaml? */
-		FileInputStream file = new FileInputStream("/home/chenshuo/18842/lab0/configuration");
+		FileInputStream file = new FileInputStream(file_name);
 		Yaml yaml =new Yaml();
 		Map<String, Object>  buffer = (Map<String, Object>) yaml.load(file);
 		List<Map<String, Object>> host_list  = (List<Map<String, Object>>) buffer.get("configuration");
@@ -172,8 +175,10 @@ public class MessagePasser {
 		}
 		return 0;
 	}
-	public static void main(String[] args) throws IOException{
-	/* TODO need delete, for testing */
-		MessagePasser test = new MessagePasser("E:\\研究生二\\842\\config.txt","host");
+	
+	/*public static void main(String[] args) throws IOException{
+	// TODO need delete, for testing *		
+	 MessagePasser test = new MessagePasser("/home/chenshuo/18842/lab0/configuration","host");
 	}
+	*/
 }
