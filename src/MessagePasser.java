@@ -75,10 +75,11 @@ public class MessagePasser {
 			System.out.println("[SEND direct]	"+message.get_dest()+":"+message.get_data().toString());
 			while( !send_queue.isEmpty()){
 				message = send_queue.poll();
-				out = new ObjectOutputStream(fd.getOutputStream());
-				out.writeObject(message);
-				out.flush();
-				System.out.println("[SEND delay]	"+message.get_dest()+":"+message.get_data().toString());
+				send(message);
+				//out = new ObjectOutputStream(fd.getOutputStream());
+				//out.writeObject(message);
+				//out.flush();
+				//System.out.println("[SEND delay]	"+message.get_dest()+":"+message.get_data().toString());
 			}
 		}
 		else if(result == 1){
@@ -87,9 +88,16 @@ public class MessagePasser {
 		}
 		else if(result  == 2){
 			// delay the message
-			Message replicate = new Message(message);
-			send_queue.add(replicate);
-			System.out.println("[SEND delay]");
+			if(message.get_send_delay() == false){
+				message.set_send_delay(true);
+				send_queue.add(message);
+				System.out.println("[SEND delay]");
+			}
+			else{
+				ObjectOutputStream out = new ObjectOutputStream(fd.getOutputStream());
+				out.writeObject(message);
+				System.out.println("[SEND delay(send)]	"+message.get_dest()+":"+message.get_data().toString());
+			}
 		}
 		else if(result == 3){
 			//duplicate the message
@@ -103,10 +111,11 @@ public class MessagePasser {
 			System.out.println("[SEND dup2]	"+message.get_dest()+":"+message.get_data().toString());
 			while( !send_queue.isEmpty()){
 				message = send_queue.poll();
-				out = new ObjectOutputStream(fd.getOutputStream());
-				out.writeObject(message);
-				out.flush();
-				System.out.println("[SEND delay]	"+message.get_dest()+":"+message.get_data().toString());
+				send(message);
+				//out = new ObjectOutputStream(fd.getOutputStream());
+				//out.writeObject(message);
+				//out.flush();
+				//System.out.println("[SEND delay]	"+message.get_dest()+":"+message.get_data().toString());
 			}
 		}
 	}
@@ -141,7 +150,8 @@ public class MessagePasser {
 			rule.set_dest((String)iterator.get("dest"));
 			rule.set_src((String)iterator.get("src"));
 			rule.set_kind((String)iterator.get("kind"));
-		    rule.set_seqNum((Integer)iterator.get("seqNum"));
+		    rule.set_duplicate((Boolean)iterator.get("duplicate"));
+			rule.set_seqNum((Integer)iterator.get("seqNum"));
 			send_rules.add(rule);
 		}
 		for (Map<String, Object> iterator : recv_list) {
@@ -150,6 +160,7 @@ public class MessagePasser {
 			rule.set_dest((String)iterator.get("dest"));
 			rule.set_src((String)iterator.get("src"));
 			rule.set_kind((String)iterator.get("kind"));
+			rule.set_duplicate((Boolean)iterator.get("duplicate"));
 			rule.set_seqNum((Integer)iterator.get("seqNum"));
 			recv_rules.add(rule);
 		}
@@ -161,7 +172,8 @@ public class MessagePasser {
 			boolean dest = (null == r.get_dest()) || (null != r.get_dest() && r.get_dest().equalsIgnoreCase(send.get_dest()));
 			boolean kind = (null == r.get_kind()) || (null != r.get_kind())&& r.get_kind().equalsIgnoreCase(send.get_kind());
 			boolean seq = (0 == r.get_int_seqNum()) || ((0 != r.get_int_seqNum()) && r.get_int_seqNum() == send.get_int_seq());
-			if(src && dest && kind && seq){
+			boolean dup = r.get_duplicate() == send.get_duplicate();
+			if(src && dest && kind && seq && dup){
 				if(r.get_action().equalsIgnoreCase("drop")) return 1;
 				if(r.get_action().equalsIgnoreCase("delay")) return 2;
 				if(r.get_action().equalsIgnoreCase("duplicate")) return 3;
@@ -175,7 +187,8 @@ public class MessagePasser {
 			boolean dest = (null == r.get_dest()) || (null != r.get_dest() && r.get_dest().equalsIgnoreCase(recv.get_dest()));
 			boolean kind = (null == r.get_kind()) || (null != r.get_kind())&& r.get_kind().equalsIgnoreCase(recv.get_kind());
 			boolean seq = (0 == r.get_int_seqNum()) || ((0 != r.get_int_seqNum()) && r.get_int_seqNum() == recv.get_int_seq());
-			if(src && dest && kind && seq){
+			boolean dup = r.get_duplicate() == recv.get_duplicate();
+			if(src && dest && kind && seq && dup){
 				if(r.get_action().equalsIgnoreCase("drop")) return 1;
 				if(r.get_action().equalsIgnoreCase("delay")) return 2;
 				if(r.get_action().equalsIgnoreCase("duplicate")) return 3;

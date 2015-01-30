@@ -10,8 +10,11 @@ public class Userapplication implements Runnable{
 		
 	}
 	public static void main(String[] args) throws IOException{
-		String configuration_addr = "/home/chenshuo/18842/lab0/configuration";
+		//String configuration_addr = "/home/chenshuo/18842/lab0/configuration";
+		String configuration_addr;
 		Scanner scanner = new Scanner(System.in);
+		System.out.println("input config file addr");
+		configuration_addr = scanner.nextLine();
 		System.out.println("input local name:");
 		String localname = scanner.nextLine();
 		mp = new MessagePasser(configuration_addr,localname);
@@ -24,6 +27,7 @@ public class Userapplication implements Runnable{
 			String data = scanner.nextLine();
 			Message to_send = new Message(localname,dest,kind,data);
 			mp.send(to_send);
+			System.out.println("seq = "+to_send.get_seq());
 		}
 	}
 

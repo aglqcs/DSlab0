@@ -5,8 +5,17 @@ public class Rule {
 	private String dest;
 	private String kind;
 	private String seqNum;
+	private boolean duplicate;
 	public Rule(){
-		type = action = src = dest = kind = seqNum = null;
+		 type = action = src = dest = kind = seqNum = null;
+		 duplicate = false;
+	}
+	public void set_duplicate(Boolean duplicate){
+		//if(dup == null)  return;
+		if(duplicate ==null) return;
+		String dup = duplicate.toString();
+		if(dup.compareToIgnoreCase("true") == 0)
+			this.duplicate = true;
 	}
 	public boolean set_type(String type){
 		if( ! (type.equals("send") || type.equals("recv")) ){
@@ -45,6 +54,10 @@ public class Rule {
 		else
 			return Integer.parseInt(this.seqNum);
 	}
+	public boolean get_duplicate(){
+		return this.duplicate;
+	}
+
 	public String get_type(){return this.type;}
 	public String get_action(){return this.action;}
 	public String get_src(){return this.src;}
